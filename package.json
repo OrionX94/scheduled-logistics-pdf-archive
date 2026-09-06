@@ -1,0 +1,20 @@
+{
+  "name": "scheduled-logistics-pdf-archive",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/report_service.ts",
+    "report:sample": "tsx scripts/run_sample_report.ts",
+    "test": "tsx --test test/report_policy.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
