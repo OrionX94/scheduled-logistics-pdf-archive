@@ -1,6 +1,6 @@
 # Archive a periodic logistics report as PDF
 
-Infrai gives you one endpoint to turn a shipment period into a PDF. The shortest path here is the runnable report script:
+The fastest way to learn this repo is the runnable report script:
 
 ```bash
 cp .env.example .env
@@ -9,13 +9,13 @@ set -a && source .env && set +a
 npm run report:sample
 ```
 
-Flow: that script calls Infrai, then records the generated document data and the archive decision under `archives/`. The request is a plain REST call with no SDK to install. Same pattern works from a Next.js route handler or a small Node worker.
+It posts a shipment period to Infrai through one endpoint (PDF). Then it writes the generated doc data and the archive decision under `archives/`. The call is plain REST with no SDK to install. That means the same pattern works from a Next.js route or a tiny Node worker.
 
 ## What the report decides
 
-Each shipment carries an event timeline, proof-of-delivery file refs, and exceptions. The policy is meant to be read easily: one unresolved exception makes the whole period `needs_attention`. No exceptions? Then the report is `ready_to_archive`. That call shows up in the Markdown sent for PDF generation and in the JSON archive record.
+Shipment in gives event timeline, proof-of-delivery refs, and exceptions. Policy stays visible: one unresolved exception flags the whole period `needs_attention`; otherwise the report is `ready_to_archive`. You see that verdict in the Markdown sent for PDF and in the JSON archive record.
 
-The sample input has one delivered shipment, one proof-of-delivery file, and no exceptions. Its expected decision is `ready_to_archive`. The command prints the archive identifier, archive path, and Infrai PDF data.
+The sample input has one delivered shipment, one POD file, no exceptions. Expected decision is `ready_to_archive`, and the command prints archive identifier, archive path, and Infrai PDF data.
 
 ## Run it as a service
 
@@ -33,24 +33,24 @@ curl -X POST http://localhost:3000/reports \
   --data @examples/report-request.json
 ```
 
-The body is validated before any PDF call. A successful response includes `archiveId`, `disposition`, `archivePath`, and the PDF response data. A scheduler can call this route at the end of each reporting period. The stable archive identifier also acts as the idempotency key for retried generation requests.
+We validate the body before any PDF call. A successful response includes `archiveId`, `disposition`, `archivePath`, and the PDF response data. A scheduler can hit this route at each period end. The stable archive identifier also acts as idempotency key for retried generation.
 
 ## The one gotcha from a Next.js angle
 
 Do not place `INFRAI_API_KEY` in a variable prefixed with `NEXT_PUBLIC_`. Keep the report workflow in a route handler, server action, or worker so the bearer credential stays server-side. This service reads it only from `process.env.INFRAI_API_KEY`.
 
-The Infrai client decodes the `{ ok, data, error, metadata }` envelope before interpreting the HTTP status. It backs off on rate limiting, honors `Retry-After`, and passes ordinary request rejections back as client responses instead of collapsing them into a generic application error.
+The Infrai client decodes the `{ ok, data, error, metadata }` envelope before interpreting HTTP status. It backs off on rate limiting, honors `Retry-After`, and passes ordinary request rejections back as client responses instead of collapsing them into a generic application error.
 
 ## Verify the policy
 
-The focused test feeds in a shipment with an unresolved delivery exception and expects `needs_attention`:
+The focused test feeds a shipment with an unresolved delivery exception and expects `needs_attention`:
 
 ```bash
 npm test
 npm run typecheck
 ```
 
-The example stores archive manifests on the local filesystem. In an app with several instances, point `archiveReport` at the durable storage already used by your server-side jobs. Keep the report decision and PDF call unchanged.
+The example stores archive manifests on local filesystem. In an app with several instances, point `archiveReport` at the durable storage already used by your server-side jobs while keeping the report decision and PDF call unchanged.
 
 ## Before you deploy: Scheduled Logistics PDF Archive
 
